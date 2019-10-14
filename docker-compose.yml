@@ -1,0 +1,37 @@
+version: '3.7'
+
+services:
+    minio:
+        image: minio/minio
+        volumes:
+            - /u01/minio_repo/data:/data
+        environment:
+            - MINIO_ACCESS_KEY=********
+            - MINIO_SECRET_KEY=********
+            - TZ=America/Lima
+        command: server /data
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
+        restart: always
+    nginx:
+        depends_on:
+            - minio
+        image: nginx
+        volumes:
+            - /opt/minio_repo/nginx:/etc/nginx/
+            - /u01/minio_repo/logs:/var/log/nginx
+        ports:
+            - "80:80"
+            - "443:443"
+        restart: always
+        environment:
+            - TZ=America/Lima
+        healthcheck:
+           test: ["CMD", "curl", "-k","-f", "https://localhost/minio/health/live"]
+           interval: 30s
+           timeout: 20s
+           retries: 3
+
